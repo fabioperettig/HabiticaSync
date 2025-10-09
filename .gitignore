@@ -1,0 +1,46 @@
+# ======================================
+# Padrão Java / Maven / IntelliJ / macOS
+# ======================================
+
+# Compilação e dependências
+target/
+out/
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.ipr
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Logs e caches
+*.log
+*.cache
+*.tmp
+
+# Arquivos de build temporários
+hs_err_pid*
+replay_pid*
+
+# Ambiente
+.env
+*.env
+.env.*
+
+# ======================================
+# Segurança
+# ======================================
+# Nunca commitar variáveis sensíveis
+HABITICA_USER_ID
+HABITICA_API_TOKEN
+*.key
+*.pem
+*.secret
+secrets.json
