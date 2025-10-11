@@ -9,6 +9,8 @@ import org.json.JSONObject;
 
 import java.util.Iterator;
 
+import com.fabio.habiticasync.utils.JsonExplorer;
+
 /**
  * Project: HabiticaSyncApp
  * Package: com.fabio.habiticasync
@@ -61,11 +63,21 @@ public class Main {
             JSONObject eggs = items.getJSONObject("eggs");
             JSONObject potions = items.getJSONObject("hatchingPotions");
 
+            // pets n mounts
+            JSONObject pets = items.getJSONObject("pets");
+
+            System.out.println("\n Pets:");
+            printNameCountMap(pets);
+
+            //JsonExplorer.print(data, "");
+            // Enable it to see the complete JSON.
+
             System.out.println("\n🥚 Ovos:");
             printNameCountMap(eggs);
 
             System.out.println("\n🧪 Poções de Eclosão:");
             printNameCountMap(potions);
+
 
         } catch (Exception e) {
             System.out.println("❌ Erro ao conectar com a API:");
