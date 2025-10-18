@@ -10,6 +10,7 @@ out/
 *.war
 *.ear
 *.iml
+*.json
 
 # IntelliJ IDEA
 .idea/

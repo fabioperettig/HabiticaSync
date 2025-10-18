@@ -49,6 +49,7 @@ In this first version, the application connects to Habitica’s API and retrieve
 Personal learning project — open for study, testing, and contribution.
 Feel free to fork and build upon it with proper attribution.
 
-#### Version: 1.0
+#### Version: 1.10
 #### Author: Fabio Peretti Guimarães 🇧🇷
-#### Date: October 2025
+#### Since: October 2025
+#### Last Update: October 2025
