@@ -62,9 +62,10 @@ public class GoogleSheetsSync {
         Sheets service = getSheetsService();
         ValueRange body = new ValueRange().setRange(range).setValues(values);
 
+
         service.spreadsheets().values()
                 .update(spreadsheetId, range, body)
-                .setValueInputOption("RAW") //"USER_ENTERED" permite fórmulas
+                .setValueInputOption("USER_ENTERED") //"USER_ENTERED" permite fórmulas
                 .execute();
 
         System.out.println("✅ Dados enviados com sucesso para o Google Sheets!");

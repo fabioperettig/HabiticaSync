@@ -9,10 +9,13 @@ import org.json.JSONObject;
 
 import com.fabio.habiticasync.integrations.GoogleSheetsSync;
 import com.fabio.habiticasync.utils.JsonExplorer;
+import com.fabio.habiticasync.content.HabiticaContentPets;
+import com.fabio.habiticasync.content.HabiticaContentPotions;
 
 import javax.naming.spi.ObjectFactoryBuilder;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Project: HabiticaSyncApp
@@ -64,16 +67,13 @@ public class Main {
             JSONObject data = root.getJSONObject("data");
             JSONObject items = data.getJSONObject("items");
             JSONObject eggs = items.getJSONObject("eggs");
+            JSONObject pets = items.getJSONObject("pets");
             JSONObject potions = items.getJSONObject("hatchingPotions");
 
-            // pets n mounts
-            JSONObject pets = items.getJSONObject("pets");
 
+            // Exibe dados no Terminal
             System.out.println("\n Pets:");
             printNameCountMap(pets);
-
-            //JsonExplorer.print(data, "");
-            // Enable it to see the complete JSON.
 
             System.out.println("\n🥚 Ovos:");
             printNameCountMap(eggs);
@@ -81,22 +81,12 @@ public class Main {
             System.out.println("\n🧪 Poções de Eclosão:");
             printNameCountMap(potions);
 
-            /* --- ENVIO TESTE ---
-            System.out.println("\nEnviando dados de teste para o Google Sheets...");
 
+            //Envio para Sheets
             String spreadsheetId = "1nLGR5gg9e4wL-2u_yo6uUq_DBB7CjQgSrsUucUoMeV4";
-
-            List<List<Object>> dataToSend = List.of(
-                    List.of("Tipo", "Quantidade"),
-                    List.of("Ovo: Lobo", 12),
-                    List.of("Ovo: Tigre", 8)
-            );
-
-            GoogleSheetsSync.writeValues(spreadsheetId, "Página1!A1:B3", dataToSend);*/
-
-            String spreadsheetId = "1nLGR5gg9e4wL-2u_yo6uUq_DBB7CjQgSrsUucUoMeV4";
-            updateSheetsEgg(eggs,spreadsheetId); //ENVIO REAL
+            updateSheetsEgg(eggs,spreadsheetId);
             updateSheetsPets(pets,spreadsheetId);
+            updateSheetsPotions(potions,spreadsheetId);
 
 
 
@@ -106,6 +96,7 @@ public class Main {
             e.printStackTrace();
         }
     }
+
 
     private static void printNameCountMap(JSONObject obj) {
         Iterator<String> keys = obj.keys();
@@ -118,6 +109,24 @@ public class Main {
             int qty = obj.optInt(name, 0);
             System.out.printf("  - %s: %d%n", name, qty);
         }
+
+        /*
+        try {
+            JSONObject content = HabiticaContentPets.getContent();
+            //JsonExplorer.print(content, "");
+
+            // 📝 Salva o JSON completo em um arquivo local
+            java.nio.file.Files.writeString(
+                    java.nio.file.Path.of("habitica_content.json"),
+                    content.toString(2) // o '2' deixa formatado com indentação bonita
+            );
+
+            System.out.println("✅ JSON completo salvo em habitica_content.json");
+        } catch (Exception e) {
+            System.out.println("❌ Erro ao buscar o conteúdo público do Habitica:");
+            e.printStackTrace();
+        }*/
+
     }
 
     /**
@@ -148,20 +157,32 @@ public class Main {
         System.out.println("\nEnviando ovos para o Google Sheets...");
         List<List<Object>> dataToSend = new java.util.ArrayList<>();
 
-        dataToSend.add(List.of("Ovo", "Quantidade"));
-
-        Iterator<String> eggKeys = eggs.keys();
-        while (eggKeys.hasNext()) {
-            String eggName = eggKeys.next();
-            int quantity = eggs.optInt(eggName, 0);
-            dataToSend.add(List.of(eggName, quantity));
-        }
+        dataToSend.add(List.of("Ovo", "Quantidade", "Imagem"));
 
         try {
-            GoogleSheetsSync.writeValues(spreadsheetId, "Página1!A1:B" + dataToSend.size(), dataToSend);
-            System.out.println("✅ Dados de ovos enviados com sucesso!");
+            JSONObject content = com.fabio.habiticasync.content.HabiticaContentEggs.getContent();
+            Map<String, String> eggImageUrls = com.fabio.habiticasync.content
+                    .HabiticaContentEggs.getEggImageUrls(content);
+
+            Iterator<String> eggKeys = eggs.keys();
+            while (eggKeys.hasNext()) {
+                String eggName = eggKeys.next();
+                int quantity = eggs.optInt(eggName, 0);
+
+                String imageFormula = "";
+                if (eggImageUrls.containsKey(eggName)) {
+                    String url = eggImageUrls.get(eggName);
+                    imageFormula = "=IMAGE(\"" + url + "\"; 4; 50; 50)";
+                }
+
+                dataToSend.add(List.of(eggName, quantity, imageFormula));
+            }
+
+            GoogleSheetsSync.writeValues(spreadsheetId, "Página1!A1:C" + dataToSend.size(), dataToSend);
+            System.out.println("✅ Eggs enviados com imagens para o Google Sheets!");
+
         } catch (Exception e) {
-            System.out.println("❌ Falha ao enviar dados para o Google Sheets:");
+            System.out.println("❌ Falha ao enviar eggs com imagens:");
             e.printStackTrace();
         }
     }
@@ -180,22 +201,70 @@ public class Main {
         System.out.println("\nEnviando pets para o Google Sheets...");
         List<List<Object>> dataToSend = new java.util.ArrayList<>();
 
-        dataToSend.add(List.of("Pets", "Quantidade"));
-
-        Iterator<String> petsKeys = pets.keys();
-        while (petsKeys.hasNext()) {
-            String petName = petsKeys.next();
-            int quantity = pets.optInt(petName,0);
-            dataToSend.add(List.of(petName, quantity));
-        }
+        dataToSend.add(List.of("Pets", "Nível", "Imagem"));
 
         try {
-            GoogleSheetsSync.writeValues(spreadsheetId, "Página1!C1:D" + dataToSend.size(), dataToSend);
-            System.out.println("✅ Dados de pets enviados com sucesso!");
+            JSONObject content = com.fabio.habiticasync.content.HabiticaContentPets.getContent();
+            Map<String, String> petImageUrls = com.fabio.habiticasync.content
+                    .HabiticaContentPets.getPetImageUrls(content);
+
+            Iterator<String> petKeys = pets.keys();
+            while (petKeys.hasNext()) {
+                String petName = petKeys.next();
+                int quantity = pets.optInt(petName, 0);
+
+                String imageFormula = "";
+                if (petImageUrls.containsKey(petName)) {
+                    String url = petImageUrls.get(petName);
+                    imageFormula = "=IMAGE(\"" + url + "\"; 4; 50; 50)";
+                }
+
+                dataToSend.add(List.of(petName, quantity, imageFormula));
+            }
+
+            GoogleSheetsSync.writeValues(spreadsheetId, "Página1!E1:G" + dataToSend.size(), dataToSend);
+            System.out.println("✅ Pets enviados com imagens para o Google Sheets!");
+
         } catch (Exception e) {
-            System.out.println("❌ Falha ao enviar dados para o Google Sheets:");
+            System.out.println("❌ Falha ao enviar pets com imagens:");
+            e.printStackTrace();
+        }
+    }
+
+    private static void updateSheetsPotions(JSONObject potions, String spreadsheetId) {
+        System.out.println("\nEnviando ovos para o Google Sheets...");
+        List<List<Object>> dataToSend = new java.util.ArrayList<>();
+
+        dataToSend.add(List.of("Poção", "Quantidade", "Imagem"));
+
+        try {
+            JSONObject content = com.fabio.habiticasync.content.HabiticaContentPotions.getContent();
+            Map<String, String> potionImageUrls = com.fabio.habiticasync.content
+                    .HabiticaContentPotions.getPotionImageUrls(content);
+
+            Iterator<String> potionKeys = potions.keys();
+            while (potionKeys.hasNext()) {
+                String potionName = potionKeys.next();
+                int quantity = potions.optInt(potionName, 0);
+
+                String imageFormula = "";
+                if (potionImageUrls.containsKey(potionName)) {
+                    String url = potionImageUrls.get(potionName);
+                    imageFormula = "=IMAGE(\"" + url + "\"; 4; 50; 50)";
+                }
+
+                dataToSend.add(List.of(potionName, quantity, imageFormula));
+            }
+
+            GoogleSheetsSync.writeValues(spreadsheetId, "Página1!I1:K" + dataToSend.size(), dataToSend);
+            System.out.println("✅ Eggs enviados com imagens para o Google Sheets!");
+
+        } catch (Exception e) {
+            System.out.println("❌ Falha ao enviar potions com imagens:");
             e.printStackTrace();
         }
 
+
     }
+
 }
